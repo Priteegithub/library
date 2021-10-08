@@ -31,7 +31,7 @@ const libchoice = (choice = 0) => {
             menu();
         });
     } else {
-        console.log("wrong input");
+        console.log("Wrong input here!");
         menu();
     }
 };
