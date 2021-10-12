@@ -1,6 +1,6 @@
 const express = require("express");
 
-const crypto = require('crypto')
+const crypto = require('crypto');
 
 const server = express()
 
@@ -31,15 +31,25 @@ server.post('/deletebook', (req, res) => {
         if (val.id == del) {
             delb = val
             return false;
-
         }
         return true;
-
     })
     if (delb) {
         return res.json({ ...delb, message: 'book has been deleted.' })
     }
     res.json({ message: "book does not exist" })
+})
+
+
+server.post('/multidelete', (req, res) => {
+    const mdel = req.body.ids;
+    let list = bList;
+    mdel.forEach((id) => {
+        list = list.filter((book) => book.id != id)
+    })
+    const num = bList.length - list.length
+    bList = list
+    res.json({ message: "books have been deleted", total_deleted: num })
 })
 
 server.get('/viewbook/:bid', (req, res) => {
