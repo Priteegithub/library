@@ -8,6 +8,7 @@
     "start": "node server.js",
     "reload": "nodemon server.js",
     "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
     "migrate:status": "prisma migrate status",
     "migrate:deploy": "prisma migrate dev"
   },
@@ -24,6 +25,7 @@
   "dependencies": {
     "@prisma/client": "^3.2.1",
     "express": "^4.17.1",
+    "joi": "^17.4.2",
     "mysql2": "^2.3.1",
     "uuid": "^8.3.2"
   },

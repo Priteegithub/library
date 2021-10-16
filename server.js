@@ -4,102 +4,131 @@ const crypto = require('crypto');
 
 const server = express()
 
+const Joi = require("joi");
+
 server.use(express.json())
 
-const mysql = require("mysql2");
 
-var conn = mysql.createConnection({ host: "localhost", user: "root", password: "12345", database: "your_library" });
+const { PrismaClient } = require("@prisma/client")
+const prisma = new PrismaClient()
 
+//let bList = []
 
-let initdb = () => {
-    conn.query("CREATE TABLE book (id VARCHAR(40) PRIMARY KEY, name VARCHAR(100))", (err, result) => {
-        if (err && err.code!== 'ER_TABLE_EXISTS_ERROR') throw err;
-        
-        let bList = []
+server.get('/', (req, res) => {
+    res.send('your library')
+})
 
-        server.get('/', (req, res) => {
-            res.send('your library')
-        })
+server.get('/addbook', async (req, res) => {
+    let c = await prisma.book.count()
+    res.send(`total ${c}`)
+})
 
-        server.get('/addbook', (req, res) => {
-            res.send('')
-        })
-
-        server.post('/savebook', (req, res) => {
-            let name = req.body.bname;
-            let id = crypto.randomUUID();
-            const book = { id, name };
-            conn.query(`insert into book VALUES("${id}","${name}")`,(err,resl)=>{
-                console.log(resl,err)
-                if (err) res.json({message: 'an error occured, can\'t save book.'})
-                else res.json({ ...book, message: 'book has been added' })
-                
-            })
-
-        })
-
-        server.post('/multibook', (req, res) => {
-            let bnames = req.body.names;
-            bnames.forEach(name => {
-                let newbookid = crypto.randomUUID();
-                const book = { id: newbookid, name: name };
-                bList.push(book);
-            });
-            res.json({ message: 'all books are added.' })
-        })
-
-        server.post('/deletebook', (req, res) => {
-            let del = req.body.id
-            let delb = null
-            conn.query(`DELETE FROM book WHERE id="${del}" `,(err)=>{
-                console.log(err)
-                if (err) res.json({message: 'an error occured, can\'t delete book.'})
-                else res.json({message: 'book has been deleted' })
-            })
-        })
-
-
-        server.post('/multidelete', (req, res) => {
-            const mdel = req.body.ids;
-            let list = bList;
-            mdel.forEach((id) => {
-                list = list.filter((book) => book.id != id)
-            })
-            const num = bList.length - list.length
-            bList = list
-            res.json({ message: "books have been deleted", total_deleted: num })
-        })
-
-        server.get('/viewbook/:bid', (req, res) => {
-            let bid = req.params.bid
-            let viewB = bList.filter((val, index) => val.id == bid);
-            if (!viewB.length) {
-                return res.json({ message: 'book does not exist' })
-            }
-            res.json(viewB[0])
-        })
-
-        server.get('/viewall', (req, res) => {
-            res.json(bList)
-        })
-
-        
-
-        const port = 3000;
-        server.listen(port, 'localhost', () => {
-            console.log(port)
-            console.log("Server started, honey");
-        })
-
-
+server.post('/savebook', async (req, res) => {
+    const schema = Joi.object({
+        bname: Joi.string().required()
     })
+    const { value, error } = schema.validate(req.body)
+    if (error) return res.json({ message: error.message })
+    const title = value.bname;
+    const id = crypto.randomUUID();
+    const book = { id, title };
+    try {
+        const resl = await prisma.book.create({ data: book })
+        res.json({ ...resl, message: 'book has been added', ok: true })
+    } catch (e) {
+        res.json({ message: 'an error occured, can\'t save book.', ok: false })
+    }
+})
 
-}
-const afterConnect = (err) => {
-    if (err) throw err
-    console.log("connected")
-    initdb()
-}
-conn.connect(afterConnect)
+server.post('/multibook', async (req, res) => {
+    const schema = Joi.object({
+        names: Joi.array().items(Joi.string().required()).required()
+    })
+    const { value, error } = schema.validate(req.body)
+    if (error) return res.json({ message: error.message })
+    let bnames = value.names;
+    let bList = []
+    bnames.forEach(name => {
+        let newbookid = crypto.randomUUID();
+        const book = { id: newbookid, title: name };
+        bList.push(book);
+    });
+    try {
+        const { count } = await prisma.book.createMany({ data: bList })
+        res.json({ message: 'all books are added.', total: count, ok: true })
+    } catch (e) {
+        res.json({ message: 'an error occured, can\'t save books.', ok: false })
+    }
+
+})
+
+server.post('/deletebook', async (req, res) => {
+    const schema = Joi.object({
+        id: Joi.string().required()
+    })
+    const { value, error } = schema.validate(req.body)
+    if (error) return res.json({ message: error.message })
+    let del = value.id
+    try {
+        const deleted = await prisma.book.delete({ where: { id: del } })
+        res.json({ message: 'book is deleted.', deleted, ok: true })
+    } catch (e) {
+        res.json({ message: 'an error occured, can\'t delete book.', ok: false })
+    }
+})
+
+
+server.post('/multidelete', async (req, res) => {
+    const schema = Joi.object({
+        ids: Joi.array().items(Joi.string().required()).required()
+    })
+    const { value, error } = schema.validate(req.body)
+    if (error) return res.json({ message: error.message })
+
+    const mdel = value.ids;
+    try {
+        const { count: total } = await prisma.book.deleteMany({ where: { id: { in: mdel } } })
+        res.json({ message: "books have been deleted", total, ok: true })
+    } catch (e) {
+        res.json({ message: 'an eror occured, can\'t delete books', ok: false })
+    }
+})
+
+server.get('/viewbook/:bid', async (req, res) => {
+    let bid = req.params.bid
+    try {
+        const book = await prisma.book.findFirst({ where: { id: bid } })
+        res.json({ book, ok: true })
+    } catch (e) {
+        res.json({ message: 'book does not exist', ok: false })
+    }
+})
+server.get('/viewall', (req,res,next)=>{
+    res.redirect('/viewall/5')
+})
+server.get('/viewall/:max',async (req, res) => {
+    let { max } = req.params
+    const { value, error } = Joi.number().default(5).required().validate(max)
+    if (error) return res.json({ meesage: 'invalid limit' })
+    try {
+        const books = await prisma.book.findMany({ select: { id: true, title: true }, take: value })
+        res.json({
+            books, ok: true
+        })
+    } catch (e) {
+
+        res.status(500).json({ message: 'an error occured', ok: false })
+    }
+})
+
+
+
+const port = 3000;
+server.listen(port, 'localhost', () => {
+    console.log(port)
+    console.log("Server started, honey");
+})
+
+
 
 
