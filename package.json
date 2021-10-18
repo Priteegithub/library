@@ -10,7 +10,8 @@
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
     "migrate:status": "prisma migrate status",
-    "migrate:deploy": "prisma migrate dev"
+    "migrate:deploy": "prisma migrate dev",
+    "migrate:shadow": "prisma migrate dev --create-only"
   },
   "repository": {
     "type": "git",
@@ -24,8 +25,10 @@
   "homepage": "https://github.com/Priteegithub/library#readme",
   "dependencies": {
     "@prisma/client": "^3.2.1",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "joi": "^17.4.2",
+    "jsonwebtoken": "^8.5.1",
     "mysql2": "^2.3.1",
     "uuid": "^8.3.2"
   },

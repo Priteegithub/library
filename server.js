@@ -1,18 +1,18 @@
+require("dotenv")
+
 const express = require("express");
-
-const crypto = require('crypto');
-
-const server = express()
 
 const Joi = require("joi");
 
+const auth = require("./routes/auth") //route
+
+const prisma = require("./db")
+
+const server = express()
+
 server.use(express.json())
 
-
-const { PrismaClient } = require("@prisma/client")
-const prisma = new PrismaClient()
-
-//let bList = []
+server.use('/authentication',auth)
 
 server.get('/', (req, res) => {
     res.send('your library')
@@ -30,8 +30,7 @@ server.post('/savebook', async (req, res) => {
     const { value, error } = schema.validate(req.body)
     if (error) return res.json({ message: error.message })
     const title = value.bname;
-    const id = crypto.randomUUID();
-    const book = { id, title };
+    const book = { title };
     try {
         const resl = await prisma.book.create({ data: book })
         res.json({ ...resl, message: 'book has been added', ok: true })
@@ -49,8 +48,7 @@ server.post('/multibook', async (req, res) => {
     let bnames = value.names;
     let bList = []
     bnames.forEach(name => {
-        let newbookid = crypto.randomUUID();
-        const book = { id: newbookid, title: name };
+        const book = { title: name };
         bList.push(book);
     });
     try {
@@ -64,7 +62,7 @@ server.post('/multibook', async (req, res) => {
 
 server.post('/deletebook', async (req, res) => {
     const schema = Joi.object({
-        id: Joi.string().required()
+        id: Joi.number().integer().required()
     })
     const { value, error } = schema.validate(req.body)
     if (error) return res.json({ message: error.message })
@@ -80,7 +78,7 @@ server.post('/deletebook', async (req, res) => {
 
 server.post('/multidelete', async (req, res) => {
     const schema = Joi.object({
-        ids: Joi.array().items(Joi.string().required()).required()
+        ids: Joi.array().items(Joi.number().integer().required()).required()
     })
     const { value, error } = schema.validate(req.body)
     if (error) return res.json({ message: error.message })
@@ -95,8 +93,8 @@ server.post('/multidelete', async (req, res) => {
 })
 
 server.get('/viewbook/:bid', async (req, res) => {
-    let bid = req.params.bid
     try {
+        let bid = Number(req.params.bid)
         const book = await prisma.book.findFirst({ where: { id: bid } })
         res.json({ book, ok: true })
     } catch (e) {
@@ -122,13 +120,8 @@ server.get('/viewall/:max',async (req, res) => {
 })
 
 
-
 const port = 3000;
 server.listen(port, 'localhost', () => {
     console.log(port)
     console.log("Server started, honey");
 })
-
-
-
-

@@ -11,8 +11,18 @@ generator client {
 }
 
 model Book {
-  id        String   @unique  
+  id        Int      @unique @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   title     String   @db.VarChar(255)
+}
+
+model User {
+  id        Int      @unique @default(autoincrement())
+  name      String   @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  pin       BigInt
+  phone     BigInt?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
