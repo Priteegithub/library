@@ -97,7 +97,7 @@ route.get('/view/:bid', async (req, res) => {
     }
 })
 route.get('/viewall', (req, res, next) => {
-    res.redirect('/viewall/5')
+    res.redirect('5')
 })
 route.get('/viewall/:max', async (req, res) => {
     let { max } = req.params
