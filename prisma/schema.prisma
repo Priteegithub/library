@@ -12,6 +12,8 @@ generator client {
 
 model Book {
   id        Int      @unique @default(autoincrement())
+  creator   User     @relation(fields: [creatorId], references: [id])
+  creatorId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   title     String   @db.VarChar(255)
@@ -25,4 +27,5 @@ model User {
   phone     BigInt?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  books     Book[]
 }

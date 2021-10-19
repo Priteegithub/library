@@ -26,7 +26,7 @@ route.post('/register', async (req, res) => {
 
 })
 
-route.post('/login', async (req, res) => {
+route.post('/login',async (req, res) => {
     const schema = Joi.object({
         email: Joi.string().email().required(),
         pin: Joi.number().integer().required()
@@ -37,11 +37,11 @@ route.post('/login', async (req, res) => {
         const user = await prisma.user.findFirst({ where: { email: value.email, pin: value.pin } })
         if (!user) return res.json({ message: "invalid credentials", ok: false })
         const token = jwt.sign({ id: user.id }, process.env.PRIVATE_KEY, {
-            expiresIn: "1d"
+            expiresIn: "2d"
         });
         res.json({ message: 'login successfull!!', ok: true, token })
     } catch (e) {
-        res.json({ message: 'an error occured.', ok: false,e})
+        res.json({ message: 'an error occured.', ok: false,})
     }
 })
 
