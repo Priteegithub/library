@@ -12,7 +12,7 @@
     "migrate:status": "prisma migrate status",
     "migrate:deploy": "prisma migrate dev",
     "migrate:shadow": "prisma migrate dev --create-only",
-    "heroku-postbuild": "prisma migrate dev"
+    "heroku-postbuild": "prisma migrate deploy"
   },
   "repository": {
     "type": "git",
