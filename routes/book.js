@@ -109,7 +109,7 @@ route.get('/viewall/:max', async (req, res) => {
             books, ok: true
         })
     } catch (e) {
-
+        console.log(e)
         res.status(500).json({ message: 'an error occured', ok: false })
     }
 })
