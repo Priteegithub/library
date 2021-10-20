@@ -9,7 +9,7 @@ server.use('/account', auth)
 server.use('/book', book)
 
 server.get('/', (req, res) => {
-    res.send('your library')
+    res.send('<h1>your library</h1>')
 })
 
 const port = process.env.PORT;
