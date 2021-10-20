@@ -5,11 +5,16 @@ const book = require('./routes/book')
 const server = express()
 server.use(express.json())
 
+server.set('view engine', 'ejs')
+
 server.use('/account', auth)
 server.use('/book', book)
 
 server.get('/', (req, res) => {
-    res.send('<h1>your library</h1>')
+
+    res.render('index', {
+        name: "Library"
+    })
 })
 
 const port = process.env.PORT;
